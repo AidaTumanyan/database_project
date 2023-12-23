@@ -3,11 +3,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from typing import List
-
+from models import Session
 from models import Transport, Route, Path
 from pydantic import BaseModel
 
+
+from fastapi import FastAPI
+
 app = FastAPI()
+
+
+
 
 engine = create_engine('postgresql://Aida:abcd@localhost:5432/database_project')
 SessionLocal = sessionmaker(bind=engine)
@@ -42,6 +48,26 @@ class PathResponse(BaseModel):
     stop_numbers: int
     distance: float
     route_id: int
+# Define the route for /Transport
+@app.get("/Transport")
+def get_transport():
+    # Logic to retrieve transport data goes here
+    return {"message": "This endpoint returns transport data"}
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+
+def get_transport_data(db: Session):
+    transports = db.query(Transport).all()
+    return transports
+
+# Define the route for /Transport
+@app.get("/Transport")
+def get_transport(db: Session = Depends(Session)):
+    transport_data = get_transport_data(db)
+    return {"transports": [transport.__dict__ for transport in transport_data]}
 
 # CRUD operations for Route
 @app.post("/routes/", response_model=RouteResponse)
