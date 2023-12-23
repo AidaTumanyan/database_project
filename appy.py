@@ -3,53 +3,91 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from typing import List
+
+from models import Transport, Route, Path
 from pydantic import BaseModel
 
-# Create your FastAPI app
 app = FastAPI()
 
-# Define your SQLAlchemy engine and session
-engine = create_engine('postgresql://aida:abcd@localhost:5432/database_project')
+engine = create_engine('postgresql://Aida:abcd@localhost:5432/database_project')
 SessionLocal = sessionmaker(bind=engine)
 
-# Import your SQLAlchemy models
-from models import Transport  # Add other models as needed
-
-# Pydantic models for request and response handling
-class TransportCreate(BaseModel):
-    name: str
-    speed: int
+# Pydantic models
+class RouteCreate(BaseModel):
+    number: str
+    passengers: int
+    cost: float
     num_cars: int
-    fuel: str
+    transport_id: int
 
-class TransportResponse(BaseModel):
+class RouteResponse(BaseModel):
     id: int
-    name: str
-    speed: int
+    number: str
+    passengers: int
+    cost: float
     num_cars: int
-    fuel: str
+    transport_id: int
 
-# CRUD operations for Transport
-@app.post("/transports/", response_model=TransportResponse)
-def create_transport(transport: TransportCreate, db: Session = Depends(SessionLocal)):
+class PathCreate(BaseModel):
+    start: str
+    end: str
+    stop_numbers: int
+    distance: float
+    route_id: int
+
+class PathResponse(BaseModel):
+    id: int
+    start: str
+    end: str
+    stop_numbers: int
+    distance: float
+    route_id: int
+
+# CRUD operations for Route
+@app.post("/routes/", response_model=RouteResponse)
+def create_route(route: RouteCreate, db: Session = Depends(SessionLocal)):
     try:
-        db_transport = Transport(**transport.dict())
-        db.add(db_transport)
+        db_route = Route(**route.dict())
+        db.add(db_route)
         db.commit()
-        db.refresh(db_transport)
-        return db_transport
+        db.refresh(db_route)
+        return db_route
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
-@app.get("/transports/{transport_id}", response_model=TransportResponse)
-def read_transport(transport_id: int, db: Session = Depends(SessionLocal)):
-    transport = db.query(Transport).filter(Transport.id == transport_id).first()
-    if transport is None:
-        raise HTTPException(status_code=404, detail="Transport not found")
-    return transport
+@app.get("/routes/{route_id}", response_model=RouteResponse)
+def read_route(route_id: int, db: Session = Depends(SessionLocal)):
+    route = db.query(Route).filter(Route.id == route_id).first()
+    if route is None:
+        raise HTTPException(status_code=404, detail="Route not found")
+    return route
 
-@app.get("/transports/", response_model=List[TransportResponse])
-def list_transports(skip: int = 0, limit: int = 10, db: Session = Depends(SessionLocal)):
-    transports = db.query(Transport).offset(skip).limit(limit).all()
-    return transports
+@app.get("/routes/", response_model=List[RouteResponse])
+def list_routes(skip: int = 0, limit: int = 10, db: Session = Depends(SessionLocal)):
+    routes = db.query(Route).offset(skip).limit(limit).all()
+    return routes
+
+# CRUD operations for Path
+@app.post("/paths/", response_model=PathResponse)
+def create_path(path: PathCreate, db: Session = Depends(SessionLocal)):
+    try:
+        db_path = Path(**path.dict())
+        db.add(db_path)
+        db.commit()
+        db.refresh(db_path)
+        return db_path
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+@app.get("/paths/{path_id}", response_model=PathResponse)
+def read_path(path_id: int, db: Session = Depends(SessionLocal)):
+    path = db.query(Path).filter(Path.id == path_id).first()
+    if path is None:
+        raise HTTPException(status_code=404, detail="Path not found")
+    return path
+
+@app.get("/paths/", response_model=List[PathResponse])
+def list_paths(skip: int = 0, limit: int = 10, db: Session = Depends(SessionLocal)):
+    paths = db.query(Path).offset(skip).limit(limit).all()
+    return paths
 
