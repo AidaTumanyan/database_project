@@ -8,6 +8,15 @@ engine = create_engine('postgresql://aida:abcd@localhost:5432/database_project',
 
 Base = declarative_base()
 
+def get_db():
+    db = None
+    try:
+        db = sessionmaker(bind=engine)()
+        yield db
+    finally:
+        if db is not None:
+            db.close()
+
 
 class Transport(Base):
     __tablename__ = 'transport'
